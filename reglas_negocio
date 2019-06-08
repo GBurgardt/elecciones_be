@@ -1,0 +1,10 @@
+- Evitar que ingrese 2 veces la misma mesa (que no se la muestre mas)
+- Candidato total votos tiene que ser menor o igual a 350
+- Sumatoria cnadidatos exceptuando total votos tiene que ser menor o igual a 350
+
+- Add columna tipo punto_muestral (Tipo TD o Candidato)
+    - Cuando se loguea candidato, lo mando a reportes. Cuando se loguea TD, lo mando a home
+- Agregar columna total votos (o diferenciar de alguuna forma)
+
+- Reportes: Mostrar porcentajes por categorias (gobernador, intendente, etc) y agregar filtros (circuito, mesa)
+    - El porcentaje se saca con una formula
