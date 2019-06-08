@@ -23,9 +23,10 @@ app.get(
 );
 
 app.get(
-    '/mesas', 
+    '/mesas/:idPuntoMuestral', 
     (req, res) => 
         knex('mesa').select('*')
+            .where('idpuntomuestral', req.params.idPuntoMuestral)
             .then(
                 resp => res.send(resp)
             )
