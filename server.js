@@ -4,6 +4,9 @@ const knex = require('./knex/knex.js');
 const cors = require('cors')
 const app = express();
 
+const candidatosNombres = require('./constants/candidatosNombres').default;
+const reglas = require('./constants/reglas').default;
+
 
 /**
  * Config multer
@@ -17,8 +20,8 @@ const upload = multer({
             cb(null, 'upload/')
         },
         filename: function (req, file, cb) {
-            const idMesa = req.params.idMesa;
-            const idCategoria = req.params.idCategoria;
+            const idMesa = req.params.descripcionMesa;
+            const idCategoria = req.params.descripcionCategoria;
 
             cb(null, `mesa-${idMesa}_categoria-${idCategoria}_date-${Date.now()}`)
         }
@@ -75,47 +78,32 @@ app.get(
 app.get(
     '/punto_muestral/:idPuntoMuestral/mesas/:idMesa/categorias',
     (req, res) => 
-
         knex('categoria').select('idcategoria').distinct()
-            .join('candidato', 'candidato.idcategoria', '=', 'categoria.id')
+            .join('candidato', 'candidato.idcategoria', 'categoria.id')
             .join('mesa_candidato', function () {
-                this
-                    .on('mesa_candidato.idcandidato', '=', 'candidato.id')
-                    .andOn('mesa_candidato.idmesa', '=', req.params.idMesa)
+                this.on('mesa_candidato.idcandidato', '=', 'candidato.id')
+                    .andOn('mesa_candidato.idmesa', '=', knex.raw('?', [req.params.idMesa]))
             })
-            .join('mesa', 'mesa.id', '=', 'mesa_candidato.idmesa')
+            .join('mesa', 'mesa.id', 'mesa_candidato.idmesa')
             .where(function () {
                 this
-                    .where('mesa.id', req.params.idMesa)
-                    .andWhere('mesa.idpuntomuestral', req.params.idPuntoMuestral)
+                    .where('mesa.id', knex.raw('?', [req.params.idMesa]))
+                    .andWhere('mesa.idpuntomuestral', knex.raw('?', [req.params.idPuntoMuestral]))
             })
             .then(
-                categoriasCargadas => 
-                    knex('categoria').select('*')
-                        .whereNotIn('id', categoriasCargadas)
+                categoriasCargadas => {
+                    const categoriasArray = categoriasCargadas.map(a => a.idcategoria);
+                    
+                    return knex('categoria').select('*')
+                        .whereNotIn('id', categoriasArray)
                         .then(
                             resp => res.send(resp)
                         )
+                }
             )
-        
-//     select distinct categoria.id from categoria
-//         inner join candidato 
-//             on candidato.idcategoria = categoria.id
-//         inner join mesa_candidato
-//             on (
-//                 mesa_candidato.idcandidato = candidato.id and
-//                 mesa_candidato.idmesa = 1
-//             )
-//         inner join mesa 
-//             on mesa.id = mesa_candidato.idmesa
-//     where     
-//         mesa.id = 1 and 
-//         mesa.idpuntomuestral = 1
-
-    
-
-    
-
+            .catch(
+                err => console.log(err)
+            )
 );
 
 app.get(
@@ -135,7 +123,7 @@ app.post('/test-upload', upload.single('attachment'), (req, res, next) => {
 
 
 app.post(
-    '/mesa-candidato/:idMesa/:idCategoria',
+    '/mesa-candidato/:descripcionMesa/:descripcionCategoria',
     (req, res, next) => {
 
         // Primero checkeo que se suba bien la foto. Caso contrario cancelo todo
@@ -149,7 +137,33 @@ app.post(
             /**
              * Mapeo el body a un array de promises (todos los insert a la db) que despues resuelvo todos juntos
              */
-            const mesasCandidatos = JSON.parse(req.body['mesasCandidatos'])
+            const mesasCandidatos = JSON.parse(req.body['mesasCandidatos']);
+
+            // RN: Candidato total votos tiene que ser menor o igual a 350
+            const candidatoTotalVotos = mesasCandidatos.find(mc => mc.candidato.nombre === candidatosNombres.TOTAL_VOTOS);
+            if (candidatoTotalVotos.cantidadVotos > reglas.MAX_VOTOS) {
+                res.status('404').send({
+                    status: 'error',
+                    body: `Total Votos supera la cantidad máxima permitida: ${reglas.MAX_VOTOS}`
+                })
+            }
+
+            // RN: Sumatoria cnadidatos exceptuando total votos tiene que ser menor o igual a 350
+            const sumTotalVotos = mesasCandidatos
+                .filter(mc => mc.candidato.nombre !== candidatosNombres.TOTAL_VOTOS)
+                .reduce(
+                    (acc, mc) => acc + Number(mc.cantidadVotos),
+                    0
+                )
+                
+            if (sumTotalVotos > reglas.MAX_VOTOS) {
+                res.status('404').send({
+                    status: 'error',
+                    body: `La suma de los votos de cada candidato supera la cantidad máxima permitida: ${reglas.MAX_VOTOS}`
+                })
+            }
+
+            const mesasCandidatosPromises = mesasCandidatos
                 .map(
                     mc => ({
                         idmesa: mc.mesa.id,
@@ -162,7 +176,7 @@ app.post(
                 )
 
 
-            Promise.all(mesasCandidatos)
+            Promise.all(mesasCandidatosPromises)
                 .then(
                     resp => res.send({
                         status: 'ok'
