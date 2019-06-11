@@ -73,11 +73,35 @@ app.get(
 );
 
 /**
+ * Retorna TODAS las categorias
+ */
+app.get(
+    '/categorias',
+    (req, res) =>
+        knex('categoria').select('*')
+            .then(
+                resp => res.send(resp)
+            )
+);
+
+/**
+ * Retorna TODOS las mesas
+ */
+app.get(
+    '/mesas',
+    (req, res) =>
+        knex('mesa').select('*')
+            .then(
+                resp => res.send(resp)
+            )
+);
+
+/**
  * Filtro las categorias DE ESA MESA que ya se han votado
  *  */
 app.get(
     '/punto_muestral/:idPuntoMuestral/mesas/:idMesa/categorias',
-    (req, res) => 
+    (req, res) =>
         knex('categoria').select('idcategoria').distinct()
             .join('candidato', 'candidato.idcategoria', 'categoria.id')
             .join('mesa_candidato', function () {
@@ -93,7 +117,7 @@ app.get(
             .then(
                 categoriasCargadas => {
                     const categoriasArray = categoriasCargadas.map(a => a.idcategoria);
-                    
+
                     return knex('categoria').select('*')
                         .whereNotIn('id', categoriasArray)
                         .then(
@@ -115,11 +139,6 @@ app.get(
                 resp => res.send(resp)
             )
 );
-
-
-app.post('/test-upload', upload.single('attachment'), (req, res, next) => {
-    res.send({ status: 'ok' })
-})
 
 
 app.post(
@@ -155,7 +174,7 @@ app.post(
                     (acc, mc) => acc + Number(mc.cantidadVotos),
                     0
                 )
-                
+
             if (sumTotalVotos > reglas.MAX_VOTOS) {
                 res.status('404').send({
                     status: 'error',
@@ -195,6 +214,35 @@ app.post(
     }
 )
 
+
+app.get(
+    '/resultados',
+    (req, res) =>
+        knex.raw('calculaProyeccion').then(function(result) {
+            // console.dir(result, {depth: null})
+            // console.log(result)
+            res.send(result)
+        })
+
+
+        // knex('mesa_candidato').select('urlimagen', 'nombre', 'cantidadvotos')
+        //     .join('candidato', 'candidato.id', 'mesa_candidato.idcandidato')
+        //     .join('mesa', 'mesa.id', 'mesa_candidato.idcandidato')
+        //     .then(
+        //         resp => res.send(
+        //             resp.map(
+        //                 r => ({
+        //                     categoriaDescripcion: 'Gobernador',
+        //                     candidatoNombre: 'Bonfatti',
+        //                     contados: 1500,
+        //                     proyectados: 60120,
+        //                     porcentaje: 20,
+        //                     urlImagen: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Antonio_Bonfatti_2019.png'
+        //                 })
+        //             )
+        //         )
+        //     )
+);
 
 /**
  * Fin endpoints

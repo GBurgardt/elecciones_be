@@ -1,3 +1,6 @@
 - Reportes: 
     - Mostrar porcentajes por categorias (gobernador, intendente, etc) y agregar filtros (circuito, mesa)
-    - El porcentaje se saca con una formula
+
+
+
+mssql-scripter -S 165.22.198.233 -d elecciones_db -U SA –schema-and-data  > ./output.sql
