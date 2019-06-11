@@ -148,8 +148,10 @@ app.post(
         // Primero checkeo que se suba bien la foto. Caso contrario cancelo todo
         upload.single('attachment')(req, res, function (err) {
             if (err instanceof multer.MulterError) {
+                console.log(err)
                 return res.status('404'.send(err))
             } else if (err) {
+                console.log(err)
                 return res.status('500'.send(err))
             }
 
@@ -157,30 +159,6 @@ app.post(
              * Mapeo el body a un array de promises (todos los insert a la db) que despues resuelvo todos juntos
              */
             const mesasCandidatos = JSON.parse(req.body['mesasCandidatos']);
-
-            // RN: Candidato total votos tiene que ser menor o igual a 350
-            const candidatoTotalVotos = mesasCandidatos.find(mc => mc.candidato.nombre === candidatosNombres.TOTAL_VOTOS);
-            if (candidatoTotalVotos.cantidadVotos > reglas.MAX_VOTOS) {
-                res.status('404').send({
-                    status: 'error',
-                    body: `Total Votos supera la cantidad máxima permitida: ${reglas.MAX_VOTOS}`
-                })
-            }
-
-            // RN: Sumatoria cnadidatos exceptuando total votos tiene que ser menor o igual a 350
-            const sumTotalVotos = mesasCandidatos
-                .filter(mc => mc.candidato.nombre !== candidatosNombres.TOTAL_VOTOS)
-                .reduce(
-                    (acc, mc) => acc + Number(mc.cantidadVotos),
-                    0
-                )
-
-            if (sumTotalVotos > reglas.MAX_VOTOS) {
-                res.status('404').send({
-                    status: 'error',
-                    body: `La suma de los votos de cada candidato supera la cantidad máxima permitida: ${reglas.MAX_VOTOS}`
-                })
-            }
 
             const mesasCandidatosPromises = mesasCandidatos
                 .map(
@@ -216,11 +194,9 @@ app.post(
 
 
 app.get(
-    '/resultados',
+    '/resultados/:idCategoria/:idMesa',
     (req, res) =>
-        knex.raw('calculaProyeccion').then(function(result) {
-            // console.dir(result, {depth: null})
-            // console.log(result)
+        knex.raw(`calculaProyeccion ${req.params.idCategoria}, ${req.params.idMesa}`).then(function(result) {
             res.send(result)
         })
 
