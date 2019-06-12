@@ -11,3 +11,5 @@ p: Humb3rt01#
 jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore HelloWorld-release-unsigned.apk alias_name
 
 zipalign -v 4 HelloWorld-release-unsigned.apk HelloWorld.apk
+
+report precensia
