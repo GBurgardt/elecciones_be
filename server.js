@@ -4,8 +4,10 @@ const knex = require('./knex/knex.js');
 const cors = require('cors')
 const app = express();
 
-const candidatosNombres = require('./constants/candidatosNombres').default;
-const reglas = require('./constants/reglas').default;
+
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 
 /**
@@ -62,35 +64,34 @@ app.get(
 );
 
 
+
+app.post(
+    '/punto_muestral/:celular',
+    (req, res) => 
+        knex('punto_muestral')
+            .update('registro_ingreso', req.body.registroIngreso)
+            .where('celular', req.params.celular)
+            .then(
+                resp => res.send({ 
+                    status: 'Ok',
+                    body: 'Presencia reportada correctamente'
+                })
+            )
+            .catch(
+                err => res.status(404).send({ 
+                    status: 'Error',
+                    body: err
+                })
+            )
+    
+);
+
+
 app.get(
     '/punto_muestral/:idPuntoMuestral/mesas',
     (req, res) =>
         knex('mesa').select('*')
             .where('idpuntomuestral', req.params.idPuntoMuestral)
-            .then(
-                resp => res.send(resp)
-            )
-);
-
-/**
- * Retorna TODAS las categorias
- */
-app.get(
-    '/categorias',
-    (req, res) =>
-        knex('categoria').select('*')
-            .then(
-                resp => res.send(resp)
-            )
-);
-
-/**
- * Retorna TODOS las mesas
- */
-app.get(
-    '/mesas',
-    (req, res) =>
-        knex('mesa').select('*')
             .then(
                 resp => res.send(resp)
             )
@@ -129,6 +130,33 @@ app.get(
                 err => console.log(err)
             )
 );
+
+
+/**
+ * Retorna TODAS las categorias
+ */
+app.get(
+    '/categorias',
+    (req, res) =>
+        knex('categoria').select('*')
+            .then(
+                resp => res.send(resp)
+            )
+);
+
+/**
+ * Retorna TODOS las mesas
+ */
+app.get(
+    '/mesas',
+    (req, res) =>
+        knex('mesa').select('*')
+            .then(
+                resp => res.send(resp)
+            )
+);
+
+
 
 app.get(
     '/categoria/:idCategoria/candidatos',
@@ -199,26 +227,8 @@ app.get(
         knex.raw(`calculaProyeccion ${req.params.idCategoria}, ${req.params.idMesa}`).then(function(result) {
             res.send(result)
         })
-
-
-        // knex('mesa_candidato').select('urlimagen', 'nombre', 'cantidadvotos')
-        //     .join('candidato', 'candidato.id', 'mesa_candidato.idcandidato')
-        //     .join('mesa', 'mesa.id', 'mesa_candidato.idcandidato')
-        //     .then(
-        //         resp => res.send(
-        //             resp.map(
-        //                 r => ({
-        //                     categoriaDescripcion: 'Gobernador',
-        //                     candidatoNombre: 'Bonfatti',
-        //                     contados: 1500,
-        //                     proyectados: 60120,
-        //                     porcentaje: 20,
-        //                     urlImagen: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Antonio_Bonfatti_2019.png'
-        //                 })
-        //             )
-        //         )
-        //     )
 );
+
 
 /**
  * Fin endpoints
