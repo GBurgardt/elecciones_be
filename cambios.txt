@@ -1,0 +1,13 @@
+- Ordenar por tipo candidato y nombre
+- Total votos mayor a sumatoria candidatos y menor a total votos
+
+> Datos
+
+gestagromovil@gmail.com
+p: Humb3rt01#
+
+--keytool -genkey -v -keystore elecciones.keystore -alias eleccionesapp2 -keyalg RSA -keysize 2048 -validity 10000
+
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore HelloWorld-release-unsigned.apk alias_name
+
+zipalign -v 4 HelloWorld-release-unsigned.apk HelloWorld.apk
