@@ -70,6 +70,7 @@ app.post(
     (req, res) => 
         knex('punto_muestral')
             .update('registro_ingreso', req.body.registroIngreso)
+            .update('horapresencia', knex.raw('GETDATE()'))
             .where('celular', req.params.celular)
             .then(
                 resp => res.send({ 
