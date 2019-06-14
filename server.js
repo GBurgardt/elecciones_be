@@ -52,6 +52,13 @@ app.get(
                 .then(
                     resp => res.send(resp)
                 )
+                .catch(
+                    err => {
+                        console.log('Celular:' + celular);
+                        console.log('ERROR')
+                        console.log(err)
+                    }
+                )
 
         } else {
             return knex('mesa').select('*')
@@ -228,6 +235,31 @@ app.get(
         knex.raw(`calculaProyeccion ${req.params.idCategoria}, ${req.params.idMesa}`).then(function(result) {
             res.send(result)
         })
+);
+
+
+app.get(
+    '/puntos-informados/:idCategoria',
+    (req, res) =>
+        knex.raw(`puntosInformadosTotal ${req.params.idCategoria}`).then(function(result) {
+            res.send(result)
+        })
+);
+
+app.get(
+    '/admin-sp/:spName',
+    (req, res) => { 
+        console.log(req.params.spName);
+
+        
+        knex.raw(`${req.params.spName}`)
+            .then(function(result) {
+                res.send(result)
+            })
+            .catch(function(err) {
+                res.status(404).send(err)
+            })
+    }
 );
 
 
