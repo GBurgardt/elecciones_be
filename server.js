@@ -2,14 +2,6 @@ const express = require('express');
 const PORT = process.env.PORT || 3001;
 const knex = require('./knex/knex.js');
 const cors = require('cors')
-const app = express();
-
-
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-
 /**
  * Config multer
  */
@@ -29,11 +21,13 @@ const upload = multer({
         }
     })
 })
-
-/**
- * Configura las CORS
- */
+const app = express();
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(cors())
+
+
 
 /**
  * Arrancan endpoints
